@@ -44,6 +44,10 @@ if __name__ == "__main__":
     #           没有GPU可以设置成False
     #---------------------------------#
     Cuda            = True
+    os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+    torch.backends.cuda.matmul.allow_tf32 = True
+    torch.backends.cudnn.benchmark = True
+    torch.backends.cudnn.deterministic = True
     #----------------------------------------------#
     #   Seed    用于固定随机种子
     #           使得每次独立训练都可以获得一样的结果
@@ -87,7 +91,7 @@ if __name__ == "__main__":
     #                   如果不设置model_path，pretrained = True，此时仅加载主干开始训练。
     #                   如果不设置model_path，pretrained = False，Freeze_Train = Fasle，此时从0开始训练，且没有冻结主干的过程。
     #----------------------------------------------------------------------------------------------------------------------------#
-    pretrained      = False
+    pretrained      =   False
     #----------------------------------------------------------------------------------------------------------------------------#
     #   权值文件的下载请看README，可以通过网盘下载。模型的 预训练权重 对不同数据集是通用的，因为特征是通用的。
     #   模型的 预训练权重 比较重要的部分是 主干特征提取网络的权值部分，用于进行特征提取。
@@ -106,7 +110,8 @@ if __name__ == "__main__":
     #   一般来讲，网络从0开始的训练效果会很差，因为权值太过随机，特征提取效果不明显，因此非常、非常、非常不建议大家从0开始训练！
     #   如果一定要从0开始，可以了解imagenet数据集，首先训练分类模型，获得网络的主干部分权值，分类模型的 主干部分 和该模型通用，基于此进行训练。
     #----------------------------------------------------------------------------------------------------------------------------#
-    model_path      = "model_data/deeplab_mobilenetv2.pth"
+    #model_path      = "model_data/deeplab_mobilenetv2.pth"
+    model_path      = ""
     #---------------------------------------------------------#
     #   downsample_factor   下采样的倍数8、16 
     #                       8下采样的倍数较小、理论上效果更好。
@@ -116,7 +121,7 @@ if __name__ == "__main__":
     #------------------------------#
     #   输入图片的大小
     #------------------------------#
-    input_shape         = [512, 512]
+    input_shape         = [256, 256]
     
     #----------------------------------------------------------------------------------------------------------------------------#
     #   训练分为两个阶段，分别是冻结阶段和解冻阶段。设置冻结阶段是为了满足机器性能不足的同学的训练需求。
@@ -170,12 +175,12 @@ if __name__ == "__main__":
     #   Unfreeze_batch_size     模型在解冻后的batch_size
     #------------------------------------------------------------------#
     UnFreeze_Epoch      = 100
-    Unfreeze_batch_size = 4
+    Unfreeze_batch_size = 8
     #------------------------------------------------------------------#
     #   Freeze_Train    是否进行冻结训练
     #                   默认先冻结主干训练后解冻训练。
     #------------------------------------------------------------------#
-    Freeze_Train        = True
+    Freeze_Train        = False
 
     #------------------------------------------------------------------#
     #   其它训练参数：学习率、优化器、学习率下降有关
@@ -358,9 +363,9 @@ if __name__ == "__main__":
     #---------------------------#
     #   读取数据集对应的txt
     #---------------------------#
-    with open(os.path.join(VOCdevkit_path, "VOC2007/ImageSets/Segmentation/train.txt"),"r") as f:
+    with open(os.path.join(VOCdevkit_path, "VOC2012/ImageSets/Segmentation/train.txt"),"r") as f:
         train_lines = f.readlines()
-    with open(os.path.join(VOCdevkit_path, "VOC2007/ImageSets/Segmentation/val.txt"),"r") as f:
+    with open(os.path.join(VOCdevkit_path, "VOC2012/ImageSets/Segmentation/val.txt"),"r") as f:
         val_lines = f.readlines()
     num_train   = len(train_lines)
     num_val     = len(val_lines)
@@ -531,6 +536,7 @@ if __name__ == "__main__":
 
             if distributed:
                 dist.barrier()
+            torch.cuda.empty_cache()
 
         if local_rank == 0:
             loss_history.writer.close()

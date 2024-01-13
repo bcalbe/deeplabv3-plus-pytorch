@@ -41,7 +41,7 @@ def fit_one_epoch(model_train, model, loss_history, eval_callback, optimizer, ep
             #----------------------#
             #   前向传播
             #----------------------#
-            outputs = model_train(imgs)
+            outputs = model_train(imgs).cuda()
             #----------------------#
             #   计算损失
             #----------------------#
